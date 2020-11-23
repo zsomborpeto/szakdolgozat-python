@@ -40,7 +40,6 @@ def ten_min():
 def next_hour():
     time = request.json.get('time')
     temp = request.json.get('temp')
-    type = request.json.get('type')
     direction = request.json.get('direction')
     date = parse(time).astimezone(pytz.timezone("Europe/Budapest"))
     date = date + datetime.timedelta(minutes=-10)
@@ -49,16 +48,26 @@ def next_hour():
     service.traffic_service.TrafficService.prev_szeged = 0
     service.traffic_service.TrafficService.prev_ujszeged = 0
 
-    return_data = []
+    car_return_data = []
+    bicycle_return_data = []
+    ped_return_data = []
 
     for x in range(26):
         new_date = date + datetime.timedelta(minutes=x * 10)
-        pred = traffic_service.get_10min_predictions(direction, new_date, temp, type)
-        if x != 0:
-            return_data.append({"value": str(pred),
-                                "date": new_date})
 
-    return jsonify(return_data)
+        car_pred = traffic_service.get_10min_predictions(direction, new_date, temp, "car")
+        if x != 0:
+            car_return_data.append({"value": str(car_pred), "date": new_date})
+
+        bicycle_pred = traffic_service.get_10min_predictions(direction, new_date, temp, "bicycle")
+        if x != 0:
+            bicycle_return_data.append({"value": str(bicycle_pred), "date": new_date})
+
+        pedestrian_pred = traffic_service.get_10min_predictions(direction, new_date, temp, "pedestrian")
+        if x != 0:
+            ped_return_data.append({"value": str(pedestrian_pred), "date": new_date})
+
+    return jsonify({"car": car_return_data, "bicycle": bicycle_return_data, "pedestrian": ped_return_data})
 
 
 @app.route('/traffic/hour', methods=['POST'])
